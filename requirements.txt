@@ -1,0 +1,2 @@
+lucidity==1.6.0
+#plotly
