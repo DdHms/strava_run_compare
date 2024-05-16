@@ -1,2 +1,7 @@
 lucidity==1.6.0
+flask==2.3.2
+matplotlib==3.4.3
 #plotly
+git+git://github.com/SantoshML/python-client@master
+stravaio==0.0.9
+scipy==1.11.4

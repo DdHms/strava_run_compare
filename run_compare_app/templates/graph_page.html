@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page 1</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Graphical progress</h1>
+    <div id="graph"></div>
+
+    <script>
+        var graphJson = {{ graph_json | safe }};
+        Plotly.newPlot('graph', graphJson);
+    </script>
+</body>
+</html>

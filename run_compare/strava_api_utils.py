@@ -1,7 +1,7 @@
 import os
 
-import constants
-from constants import DESCRIPTION_HEADER, DESCRIPTION_FOOTER, BASE_BLOCK_TEMPLATE, INTERVAL_BLOCK_TEMPLATE, \
+from run_compare import constants
+from run_compare.constants import DESCRIPTION_HEADER, DESCRIPTION_FOOTER, BASE_BLOCK_TEMPLATE, INTERVAL_BLOCK_TEMPLATE, \
     wrap_interval_data, wrap_base_data
 import swagger_client
 import requests
@@ -105,7 +105,7 @@ def parser(text, separators):
             continue
         out, rest = rest.split(sep)[0], sep.join(rest.split(sep)[1:])
 
-        output.append(out)
+        output.append(float(out))
     if not text.endswith(separators[-1]):
         output.append(rest)
     return output
@@ -123,6 +123,12 @@ def summary_from_description(textual_summary):
         data = wrap_base_data(*input_values)
     return data
 
+def get_activities(access_token, invalidate_history=False):
+    list_of_activities = get_athlete_activities(access_token=access_token, n=50)
+    run_activities = get_run_activities(list_of_activities)
+    full_run_activities = get_full_activities(access_token, run_activities)
+    non_summarized = full_run_activities if invalidate_history else get_non_summarized_activities(full_run_activities)
+    return non_summarized, full_run_activities
 
 def get_athlete_activities(access_token, n=30, after=None):
     activities_url = f"https://www.strava.com/api/v3/athlete/activities?" \
@@ -154,6 +160,9 @@ def get_summarized_activites(full_activities_json):
     return summarized
 
 def exists_and_summarized(act):
+    if 'description' not in act.keys():
+        print(f'activity {act["id"]} has no description')
+        return False
     if act['description'] is None:
         return False
     elif constants.DESCRIPTION_HEADER not in act['description']:

@@ -1,0 +1,40 @@
+ <!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Strava.comp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+<!--    <script src="https://kit.fontawesome.com/a076d05399.js"></script>-->
+  </head>
+  <body>
+    <nav>
+      <input type="checkbox" id="check">
+      <label for="check" class="checkbtn">
+        <i class="fas fa-bars"></i>
+      </label>
+      <label class="logo">Strava.comp</label>
+      <ul>
+<!--        <li><a class="active" href="#">Home</a></li>-->
+        <li><a href="#"onclick="loadPage('../static/pages/welcome.html')">Login</a></li>
+        <li><a href="#"onclick="loadPage('.graph_page.html')">Graph</a></li>
+<!--        <li><a href="#">Contact</a></li>-->
+<!--        <li><a href="#">Feedback</a></li>-->
+      </ul>
+    </nav>
+<section id="content">'
+    <!-- graph -->'
+</section>
+
+<script>
+  function loadPage(pageUrl) {
+    fetch(pageUrl)
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('content').innerHTML = html;
+      })
+      .catch(error => console.error('Error loading page:', error));
+  }
+</script>
+</body>
+</html>
