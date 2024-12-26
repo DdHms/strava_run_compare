@@ -1,23 +1,27 @@
 import os
+import threading
 
+from flask import request, redirect, session
 from run_compare import constants
 from run_compare.constants import DESCRIPTION_HEADER, DESCRIPTION_FOOTER, BASE_BLOCK_TEMPLATE, INTERVAL_BLOCK_TEMPLATE, \
     wrap_interval_data, wrap_base_data
 import swagger_client
 import requests
-from stravaio import run_server_and_wait_for_token
+from run_compare.stravaio import run_server_and_wait_for_token
 import urllib
 import webbrowser
+
+from run_compare_app import app
 
 activites_url = "https://www.strava.com/api/v3/athlete/activities"
 auth_url = "https://www.strava.com/oauth/token"
 
 
-def _request_strava_authorize(client_id, port):
+def _request_strava_authorize(client_id, port, address='localhost'):
     params_oauth = {
         "client_id": client_id,
         "response_type": "code",
-        "redirect_uri": f"http://localhost:{port}/authorization_successful",
+        "redirect_uri": f"https://{address}/authorization_successful",
         "scope": "read,profile:read_all,activity:write,activity:read",
         "state": 'https://github.com/sladkovm/strava-http',
         "approval_prompt": "force"
@@ -25,10 +29,13 @@ def _request_strava_authorize(client_id, port):
     values_url = urllib.parse.urlencode(params_oauth)
     base_url = 'https://www.strava.com/oauth/authorize'
     rv = base_url + '?' + values_url
-    webbrowser.get().open(rv)
-    return None
+    return rv
 
-def strava_oauth2(client_id=None, client_secret=None, port=8000):
+def open_strave_authorize(url):
+    webbrowser.get().open(url)
+
+
+def get_strava_oauth2_url(client_id=None, client_secret=None, port=3475):
     """Run strava authorization flow. This function will open a default system
     browser alongside starting a local webserver. The authorization procedure will be completed in the browser.
 
@@ -39,6 +46,7 @@ def strava_oauth2(client_id=None, client_secret=None, port=8000):
     client_id: int, if not provided will be retrieved from the STRAVA_CLIENT_ID env viriable
     client_secret: str, if not provided will be retrieved from the STRAVA_CLIENT_SECRET env viriable
     """
+
     if client_id is None:
         client_id = os.getenv('STRAVA_CLIENT_ID', None)
         if client_id is None:
@@ -49,16 +57,42 @@ def strava_oauth2(client_id=None, client_secret=None, port=8000):
             raise ValueError('client_secret is None')
 
     # port = 8000
-    _request_strava_authorize(client_id, port)
+    host = 'hms-thinkcentre-m93p.taile37d5a.ts.net' #request.url.split('://')[1].split('/')[0].split(':')[0]
+    url = _request_strava_authorize(client_id, port, address=host)
+    return url
+
+# def get_strava_token_from_url(url, client_id, client_secret, port=8000):
+#     open_strave_authorize(url)
+#     host = '0.0.0.0'
+#     port = 8001
+#     token = run_server_and_wait_for_token(host=host,
+#         port=port,
+#         client_id=client_id,
+#         client_secret=client_secret
+#     )
+#     return token
+
+def get_strava_token_from_url(url, client_id, client_secret, port=3475):
+    """Starts the socket server in a thread and opens the Strava authorization URL."""
+
+    with app.app_context():
+        session["access_token"] = run_server_and_wait_for_token(
+                client_id=client_id,
+                client_secret=client_secret,
+                host="0.0.0.0",
+                port=port
+            )
 
 
-    token = run_server_and_wait_for_token(
-        port=port,
-        client_id=client_id,
-        client_secret=client_secret
-    )
+# Utility function for manual URL opening (replace or adapt for your use case)
+def open_strava_authorize(url):
+    """
+    Redirects the client to the Flask route that opens the OAuth URL in a new tab.
+    """
+    from flask import url_for
+    redirect_url = url_for('redirect_to_strava', url=url, _external=True)
+    return redirect(redirect_url)
 
-    return token
 
 def fetch_token():
     client_id = input('input client id from this page: https://www.strava.com/settings/api')

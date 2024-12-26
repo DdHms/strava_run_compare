@@ -1,11 +1,11 @@
 # from stravaio import strava_oauth2
 
 import numpy as np
-from stravaio import StravaIO
+from run_compare.stravaio import StravaIO
 
 from run_compare.activity_analysis_utils import calculate_analysis, gather_data_for_plotting
 from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET
-from run_compare.strava_api_utils import strava_oauth2, get_activities
+from run_compare.strava_api_utils import get_strava_oauth2_url, get_activities, get_strava_token_from_url
 from run_compare.visualisation_utils import plot_to_date
 
 OFFLINE = False
@@ -13,9 +13,8 @@ DEBUG = False
 INVALIDATE_HISTORY = False
 
 if not OFFLINE:
-    STRAVA_ACCESS_TOKEN = strava_oauth2(client_id=APP_CLIENT_ID,
-                                        client_secret=APP_CLIENT_SECRET,
-                                        port=8001)
+    url = get_strava_oauth2_url(client_id=APP_CLIENT_ID, client_secret=APP_CLIENT_SECRET, port=8001)
+    STRAVA_ACCESS_TOKEN = get_strava_token_from_url(url, APP_CLIENT_ID, APP_CLIENT_SECRET)
     print('Connection succeeded')
 
     client = StravaIO(access_token=STRAVA_ACCESS_TOKEN['access_token'])

@@ -16,16 +16,27 @@
       <label class="logo">Strava.comp</label>
       <ul>
 <!--        <li><a class="active" href="#">Home</a></li>-->
-        <li><a href="#"onclick="loadPage('../static/pages/welcome.html')">Login</a></li>
+        <li><a href="#" onclick="fetch('/index', { method: 'POST' }); return false;">Login</a></li>
         <li><a href="#"onclick="loadPage('.graph_page.html')">Graph</a></li>
 <!--        <li><a href="#">Contact</a></li>-->
 <!--        <li><a href="#">Feedback</a></li>-->
       </ul>
     </nav>
 <section id="content">'
+    <style>
+        #plotly-div {
+            width: 100%;  /* Ensures the div takes full page width */
+        }
+        </style>
     <!-- graph -->'
 </section>
-
+    <script>
+  if (!localStorage.getItem('reloaded')) {
+    // Reload the page once
+    localStorage.setItem('reloaded', 'true');
+    window.location.reload();
+  }
+</script>
 <script>
   function loadPage(pageUrl) {
     fetch(pageUrl)

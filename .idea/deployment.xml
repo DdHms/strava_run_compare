@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="hms@100.110.153.23:22 password (2)" exclude=".svn;.cvs;.idea;.DS_Store;.git;.hg;*.hprof;*.pyc;venv" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
+    <serverData>
+      <paths name="hms@100.110.153.23:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/strava_compare" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="hms@100.110.153.23:22 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/hms/scripts/strava_compare/" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

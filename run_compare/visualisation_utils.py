@@ -16,9 +16,14 @@ def plot_intervals(intervals_data):
     pass
 
 
-def plot_to_date(dates, values, deltas, add_to_fig=None, color='rgba(0,200,255,', name='', label=None, separate=False):
+def plot_to_date(dates, values, deltas, add_to_fig=None, color='rgba(0,200,255,', name='', label=None, separate=False, marker_col=None):
     if add_to_fig is None:
         add_to_fig = make_subplots(specs=[[{"secondary_y": True}]])
+        add_to_fig.update_layout(
+            autosize=True,
+            plot_bgcolor='rgba(211, 211, 211, 0.5)',  # Light grey with 50% opacity
+            paper_bgcolor='rgba(211, 211, 211, 0.5)'  # Light blue with 50% opacity
+        )
 
     x = [d.strftime("%y-%m-%d") for d in dates]
     y = np.array(values)
@@ -26,14 +31,16 @@ def plot_to_date(dates, values, deltas, add_to_fig=None, color='rgba(0,200,255,'
     y_lower = y - np.array(deltas)
     ln_col = color + '1)'
     fill_col = color + '0.5)'
-    add_to_fig.add_trace(go.Scatter(x=x, y=y_lower.tolist(), line=dict(color='rgba(255,255,255,0)'), showlegend=False),
+    add_to_fig.add_trace(go.Scatter(x=x, y=y_lower.tolist(), line=dict(color='rgba(255,255,255,0)'), showlegend=False),  # Set the position of the labels),
                          secondary_y=separate)
+    if marker_col is None:
+        marker_col = ln_col
     add_to_fig.add_trace(
         go.Scatter(x=x, y=y_upper.tolist(), fill='tonexty', fillcolor=fill_col, line=dict(color='rgba(255,255,255,0)'),
                    showlegend=False, ), secondary_y=separate)
 
-    add_to_fig.add_trace(go.Scatter(x=x, y=y.tolist(), line=dict(color=ln_col, width=2.5), showlegend=False, text=label,
-                                    mode='text+lines'),
+    add_to_fig.add_trace(go.Scatter(x=x, y=y.tolist(), marker=dict(size=10, color=marker_col), line=dict(color=ln_col, width=2.5), showlegend=False, text=label, textposition='bottom center',
+                                    mode='text+lines+markers'),
                          secondary_y=separate)
     date2display = [d.strftime("%b %d") for d in dates]
     # fig.update_layout(xaxis=dict(title='', gridcolor='grey', tickmode='array', tickvals=date2display, ))

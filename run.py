@@ -1,6 +1,13 @@
 from run_compare_app import app
+from flask import url_for
 
-app.secret_key = '1234'
-app.config['SESSION_TYPE'] = 'filesystem'
+def generate_url():
+    with app.app_context():  # Explicitly set the application context
+        my_url = url_for('login', _external=True)
+        print(f"Generated URL: {my_url}")
+        return my_url
 
-app.run(debug=True)
+if __name__ == '__main__':
+    app.config['SESSION_TYPE'] = 'filesystem'
+
+    app.run(debug=True, port=3474)

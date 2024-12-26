@@ -10,6 +10,8 @@ BASE = 'base'
 
 APP_CLIENT_ID = '94807'
 APP_CLIENT_SECRET = '6a9c293a602a6acefb1d7a2feb3d92242495dcf5'
+BASE_COLOR = 'rgba(0,100,255,1)'
+INTERVAL_COLOR = 'rgba(0,200,200,1)'
 
 def wrap_interval_data(n_intervals, interval_distance, interval_speeds, d_speeds, intervals_hr, d_hr):
     return {'type': INTERVAL,

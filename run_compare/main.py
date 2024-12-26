@@ -3,9 +3,9 @@ import urllib3
 import os
 import numpy as np
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-from strava_api_utils import activites_url, auth_url, fetch_token
+from run_compare.strava_api_utils import activites_url, auth_url, fetch_token
 
-access_token = fetch_token()
+# access_token = fetch_token()
 def get_activites(access_token, max_entries=np.inf, entries_per_page=50):
     n = 0
     page = 1
@@ -16,7 +16,7 @@ def get_activites(access_token, max_entries=np.inf, entries_per_page=50):
         page += 1
         n += entries_per_page
         return res
-get_activites(access_token)
+# get_activites(access_token)
 
 
 
