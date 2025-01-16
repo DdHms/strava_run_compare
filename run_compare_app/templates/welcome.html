@@ -1,158 +1,74 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Welcome</title>
-<style>
-    body {
-        font-family: sans-serif;
-        background: #eee;
-        margin: 0;
-        padding: 0;
-    }
-    a, h1 {
-        color: #377BA8;
-    }
-    h1, h2 {
-        font-family: 'Georgia', serif;
-        margin: 0;
-    }
-    h1 {
-        border-bottom: 2px solid #eee;
-        font-size: 2em;
-    }
-    h2 {
-        color: #000000;
-        font-size: 1.2em;
-    }
-    .page {
-        margin: 2em auto;
-        max-width: 90%;
-        width: 600px;
-        border: 5px solid #dc0707;
-        padding: 2em;
-        background: white;
-    }
-    .entries {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-    .entries li {
-        margin: 0.8em 1.2em;
-    }
-    .entries li h2 {
-        margin-left: -1em;
-    }
-    .add-entry {
-        font-size: 0.9em;
-        border-bottom: 1px solid #2bc224;
-    }
-    .add-entry dl {
-        font-weight: bold;
-    }
-    .metanav {
-        text-align: left;
-        font-size: 0.8em;
-        padding: 0.3em;
-        margin-bottom: 1em;
-        background: #fafafa;
-    }
-    form input[type="submit"] {
-        width: 100%;
-        padding: 0.5em;
-        font-size: 1em;
-    }
-    .flash {
-        background: #157ac0;
-        padding: 0.5em;
-        border: 1px solid #AACBE2;
-    }
-    .error {
-        background: #F0D6D6;
-        padding: 0.5em;
-    }
-    @media (max-width: 768px) {
-        .page {
-            padding: 1em;
+    <!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #eee;
+            margin: 0;
+            padding: 0;
+        }
+        a, h1 {
+            color: #377BA8;
         }
         h1, h2 {
-            font-size: 1.5em;
+            font-family: 'Georgia', serif;
+            margin: 0;
+        }
+        h1 {
+            border-bottom: 2px solid #eee;
+            font-size: 2em;
+        }
+        h2 {
+            color: #000000;
+            font-size: 1.2em;
+        }
+        .page {
+            margin: 2em auto;
+            max-width: 90%;
+            width: 600px;
+            border: 5px solid #dc0707;
+            padding: 2em;
+            background: white;
         }
         .metanav {
-            font-size: 0.9em;
+            text-align: left;
+            font-size: 0.8em;
+            padding: 0.3em;
+            margin-bottom: 1em;
+            background: #fafafa;
         }
-    }
-</style>
-</head>
-<body>
-<div class="page">
-  <h1>Welcome to our Strava app!</h1>
-  <div class="metanav">
-    <h3>
-      This app does moagic.
-    </h3>
-<h3>
-  <button id="externalLinkButton">Ok!</button>
-</h3>
-<script>
-  // Define the external URL
-    const externalUrl = "{{ externalUrl }}";
-
-  // Attach a click event to the button to redirect to the external URL
-  document.getElementById("externalLinkButton").addEventListener("click", () => {
-    window.location.href = externalUrl;
-  });
-</script>
-  </div>
-</div>
-</body>
-</html>
-
-
-<!--<!doctype html>-->
-<!--<style>-->
-<!--    body            { font-family: sans-serif; background: #eee; }-->
-<!--a, h1           { color: #377BA8; }-->
-<!--h1, h2          { font-family: 'Georgia', serif; margin: 0; }-->
-<!--h1              { border-bottom: 2px solid #eee; }-->
-<!--h2              { color: #000000; font-size: 1.2em; }-->
-
-<!--.page           {margin: 2em auto; width: 35em; border: 5px solid #dc0707;-->
-<!--                  padding: 8em; background: white; }-->
-<!--.entries        { list-style: none; margin: 0; padding: 0; }-->
-<!--.entries li     { margin: 0.8em 1.2em; }-->
-<!--.entries li h2  { margin-left: -1em; }-->
-<!--.add-entry      { font-size: 0.9em; border-bottom: 1px solid #2bc224; }-->
-<!--.add-entry dl   { font-weight: bold; }-->
-<!--.metanav        { text-align: left; font-size: 0.8em; padding: 0.3em;-->
-<!--                  margin-bottom: 1em; background: #fafafa; }-->
-<!--.flash          { background: #157ac0; padding: 0.5em;-->
-<!--                  border: 1px solid #AACBE2; }-->
-<!--.error          { background: #F0D6D6; padding: 0.5em; }-->
-
-<!--</style>-->
-<!--<title>Welcome</title>-->
-<!--&lt;!&ndash;<link rel=stylesheet type=text/css href='{{ url_for('static',filename='style.css')}}'>&ndash;&gt;-->
-<!--<div class=page>-->
-<!--  <h1>Welcome to our Strava app!</h1>-->
-<!--  <div class=metanav>-->
-<!--    <h3>-->
-<!--      This app finds similar runners in your area, based on your proximity on-->
-<!--      segment leaderboards for the segments you've run most recently.-->
-<!--    </h3>-->
-<!--    <h3>-->
-<!--    Click below to authenticate with Strava.-->
-<!--  </h3>-->
-
-<!--    <form id='userinfoform' method='post' action='index' >-->
-
-<!--     <p>-->
-<!--     <input type='submit' value='Ok!' />-->
-<!--     </p>-->
-<!--    </form>-->
-
-<!--  </div>-->
-<!--</div>-->
-<!--</html>-->
+        @media (max-width: 768px) {
+            .page {
+                padding: 1em;
+            }
+            h1, h2 {
+                font-size: 1.5em;
+            }
+            .metanav {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    </head>
+    <body>
+    <div class="page" style="text-align: center">
+      <h1>Welcome to our Strava app!</h1>
+      <div class="metanav" style="text-align: center">
+        <h3>This app does magic.</h3>
+        <h3>
+          <a href="{{ url }}" target="_blank">Login to Strava</a>
+        </h3>
+        <script>
+            window.onload = function(){
+                document.querySelector('#overlay > a').click();
+                checkAuthStatus();
+            }
+        </script>
+      </div>
+    </div>
+    </body>
+    </html>

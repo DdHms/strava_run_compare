@@ -1,23 +1,65 @@
 import threading
 
 import numpy as np
+import pandas as pd
 import requests
 
 from run_compare.activity_analysis_utils import calculate_analysis, gather_data_for_plotting
-# from run_compare.main import access_token
+from run_compare.prompt_constants import SUGGESTED_EXERCISE_PROMPT, SYSTEM_PROMPT
 from run_compare.visualisation_utils import plot_to_date
 from run_compare_app import app
 from run_compare.stravaio import StravaIO, run_server_and_wait_for_token, run_server_and_wait_for_token_
 from run_compare.strava_api_utils import get_strava_oauth2_url, get_activities, get_strava_token_from_url
-from flask import render_template, request, redirect, session, render_template_string, jsonify
+from flask import render_template, request, redirect, session, render_template_string, jsonify, url_for
 
-from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET, BASE_COLOR, INTERVAL_COLOR
+from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET, BASE_COLOR, INTERVAL_COLOR, N_ACTIVITIES, \
+    ai_schema_type_json
 from plotly.utils import PlotlyJSONEncoder
 import json
 
 global_session = {}
 session_ready = threading.Event()  # Synchronization object
 
+def convert_activities_to_df(base_activities, inteval_activities):
+    # Convert lists to DataFrames
+    base_df = pd.DataFrame(base_activities)
+    intervals_df = pd.DataFrame(inteval_activities)
+
+    # Add a source column to each DataFrame
+    base_df['source'] = 'base_activity'
+    intervals_df['source'] = 'interval'
+
+    # Rename columns for clarity
+    base_df.rename(columns={'SPEED': 'BASE_SPEED', 'DISTANCE': 'BASE_DISTANCE', 'HR': 'BASE_HR'}, inplace=True)
+    intervals_df.rename(columns={'INTERVAL_SPEED': 'INTERVAL_SPEED', 'INTERVAL_DISTANCE': 'INTERVAL_DISTANCE',
+                                 'INTERVAL_HR': 'INTERVAL_HR'}, inplace=True)
+
+    # Combine DataFrames and sort by date
+    combined_df = pd.concat([base_df, intervals_df], ignore_index=True).sort_values(by='date').reset_index(drop=True)
+
+    # Helper functions to format columns
+    def format_distance(row):
+        if row['source'] == 'base_activity':
+            return row['BASE_DISTANCE']
+        elif row['source'] == 'interval':
+            return f"{int(row['N_INTERVALS'])} X {row['INTERVAL_DISTANCE']}"
+
+    def format_hr(row):
+        return row['BASE_HR'] if row['source'] == 'base_activity' else row['INTERVAL_HR']
+
+    def format_speed(row):
+        return row['BASE_SPEED'] if row['source'] == 'base_activity' else row['INTERVAL_SPEED']
+
+    # Create the formatted DataFrame
+    formatted_df = pd.DataFrame({
+        'date': combined_df['date'],
+        'source': combined_df['source'],
+        'distance': combined_df.apply(format_distance, axis=1),
+        'HR': combined_df.apply(format_hr, axis=1),
+        'pace': combined_df.apply(format_speed, axis=1),
+    })
+
+    return formatted_df
 
 @app.route('/')
 @app.route('/index', methods=['GET', 'POST'])
@@ -32,63 +74,15 @@ def index():
 def main():
     oauth_url = get_strava_oauth2_url(client_id=APP_CLIENT_ID, client_secret=APP_CLIENT_SECRET, port=8001)
     # Here I want an html page to open the oauth_url in a new tab and close itself
-
-    listener_thread = threading.Thread(
-        target=run_server_and_wait_for_token_,
-        args=(APP_CLIENT_ID, APP_CLIENT_SECRET),
-        kwargs={'session': global_session, 'event': session_ready},
-        daemon=False
-    )
-    listener_thread.start()
-    # Redirect the user to the Strava OAuth URL
-    environment_template = render_template('index.html', refreshed=False)
-    redirect_template = render_template('welcome.html', externalUrl=oauth_url)
-    environment_template = environment_template.replace('<!-- graph -->', redirect_template)
-    return redirect(f'/redirect_to_strava?url={oauth_url}')
-
-@app.route('/redirect_to_strava')
-def redirect_to_strava():
-    """
-    Generates a small HTML page to open the Strava OAuth URL in a new tab
-    and close itself once authentication is completed.
-    """
-    strava_oauth_url = request.args.get('url')  # Get the URL from query parameters
-    if not strava_oauth_url:
-        return "Error: No URL provided", 400
-
-    html = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Redirecting...</title>
-        <script>
-            // Open the OAuth URL in a new tab
-            const oauthWindow = window.open("{strava_oauth_url}", "_blank");
-            // Close the current tab/window after a short delay
-            setTimeout(() => window.close(), 1000);
-        </script>
-    </head>
-    <body>
-        <p>Redirecting to Strava for authentication...</p>
-    </body>
-    </html>
-    """
-    return html
-@app.route('/status')
-def status():
-    """Checks if the access token has been received."""
-    if access_token:
-        return jsonify({"status": "success", "access_token": access_token})
-    else:
-        return jsonify({"status": "pending", "message": "Waiting for authentication..."})
+    print(oauth_url)
+    return render_template('welcome.html', url=oauth_url)
 
 @app.route('/authorization_successful')#, methods=['GET'])
 def authorization_successful():
     # Extract the authorization code from the query parameters
     print('authorization_successful')
     authorization_code = request.args.get('code')
+    global_session['code'] = authorization_code
     response = requests.post(
         "https://www.strava.com/oauth/token",
         data={
@@ -108,31 +102,9 @@ def authorization_successful():
     session['athlete_id'] = athlete.id
     # session['client'] = client
     # segment_ids_from_activities(client, max_activities = 5) # sets segment_ids_unique
-    return redirect('/activities')
-
-    # STRAVA_ACCESS_TOKEN = get_strava_token_from_url(
-    #     url=oauth_url,
-    #     client_id=APP_CLIENT_ID,
-    #     client_secret=APP_CLIENT_SECRET,
-    #     port=8001
-    # )
-    #
-    # client = StravaIO(access_token=STRAVA_ACCESS_TOKEN['access_token'])
-    # athlete = client.get_logged_in_athlete()
-    # athlete_dict = athlete.to_dict()
-    # session['athlete_name'] = athlete_dict['firstname'] + ' ' + athlete_dict['lastname']
-    # session['access_token'] = STRAVA_ACCESS_TOKEN['access_token']
-    # session['athlete_id'] = athlete.id
-    # # session['client'] = client
-    # # segment_ids_from_activities(client, max_activities = 5) # sets segment_ids_unique
-    # return redirect('/activities')
-    # if you want a simple output of first name, last name, just use this line:
-    # return athlete.firstname + ' ' + athlete.lastname
-
-@app.route('/activities')
-def options():
     client = StravaIO(access_token=session['access_token'])
-    non_summarized, full_run_activities = get_activities(access_token=session['access_token'], invalidate_history=False)
+    non_summarized, full_run_activities = get_activities(access_token=session['access_token'], invalidate_history=False,
+                                                         num_activities=N_ACTIVITIES)
     for activity in non_summarized:
         calculate_analysis(athlete_id=session['athlete_id'], activity_id=activity['id'], client=client)
     base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
@@ -158,6 +130,29 @@ def page1():
     graph_template = render_template('graph_page.html', graph_json=fig_json)
     environment_template = environment_template.replace('<!-- graph -->', graph_template)
     return environment_template
+
+@app.route('/activities')
+def activities():
+    df = convert_activities_to_df(base_activities=session['base_activities'],
+                                  inteval_activities=session['interval_activities'])
+    session['activities_df'] = df
+
+    # Convert DataFrame to HTML
+    html_table = df.to_html(classes='table table-striped')
+    # Pass the HTML table to the template
+    environment_template = render_template('index.html')
+    graph_template = render_template('table.html', table=html_table)
+    environment_template = environment_template.replace('<!-- graph -->', graph_template)
+    return environment_template
+
+@app.route('/ai')
+def ask_ai():
+    data = session['activities_df'].to_dict(orient='index')
+    request = {'user_prompt': SUGGESTED_EXERCISE_PROMPT,
+               'system_prompt': SYSTEM_PROMPT,
+               'schema': ai_schema_type_json,
+               'context': data}
+
 
 
 def collect_data_for_fig(base_activities, interval_activities):

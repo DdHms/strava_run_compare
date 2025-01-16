@@ -4,7 +4,7 @@ import threading
 from flask import request, redirect, session
 from run_compare import constants
 from run_compare.constants import DESCRIPTION_HEADER, DESCRIPTION_FOOTER, BASE_BLOCK_TEMPLATE, INTERVAL_BLOCK_TEMPLATE, \
-    wrap_interval_data, wrap_base_data
+    wrap_interval_data, wrap_base_data, N_ACTIVITIES
 import swagger_client
 import requests
 from run_compare.stravaio import run_server_and_wait_for_token
@@ -157,14 +157,14 @@ def summary_from_description(textual_summary):
         data = wrap_base_data(*input_values)
     return data
 
-def get_activities(access_token, invalidate_history=False):
-    list_of_activities = get_athlete_activities(access_token=access_token, n=50)
+def get_activities(access_token, invalidate_history=False, num_activities=N_ACTIVITIES):
+    list_of_activities = get_athlete_activities(access_token=access_token, n=num_activities)
     run_activities = get_run_activities(list_of_activities)
     full_run_activities = get_full_activities(access_token, run_activities)
     non_summarized = full_run_activities if invalidate_history else get_non_summarized_activities(full_run_activities)
     return non_summarized, full_run_activities
 
-def get_athlete_activities(access_token, n=30, after=None):
+def get_athlete_activities(access_token, n, after=None):
     activities_url = f"https://www.strava.com/api/v3/athlete/activities?" \
                      f"per_page={n}&access_token={access_token}"
     if after is not None:

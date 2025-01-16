@@ -7,7 +7,7 @@ BASE_BLOCK_TEMPLATE = 'base:{summary["data"]["DISTANCE"]}m@{summary["data"]["SPE
 INTERVAL_BLOCK_TEMPLATE = 'interval:{summary["data"]["N_INTERVALS"]}X[{summary["data"]["INTERVAL_DISTANCE"]}m@{summary["data"]["INTERVAL_SPEED"]}\u00B1\u0394{summary["data"]["DSPEED"]}min/km\U0001fac0{summary["data"]["INTERVAL_HR"]}]\u00B1\u0394{summary["data"]["DHR"]}BPM'
 INTERVAL = 'interval'
 BASE = 'base'
-
+N_ACTIVITIES = 20
 APP_CLIENT_ID = '94807'
 APP_CLIENT_SECRET = '6a9c293a602a6acefb1d7a2feb3d92242495dcf5'
 BASE_COLOR = 'rgba(0,100,255,1)'
