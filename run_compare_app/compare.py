@@ -5,15 +5,14 @@ import pandas as pd
 import requests
 
 from run_compare.activity_analysis_utils import calculate_analysis, gather_data_for_plotting
-from run_compare.prompt_constants import SUGGESTED_EXERCISE_PROMPT, SYSTEM_PROMPT
-from run_compare.visualisation_utils import plot_to_date
+from run_compare.prompt_constants import SUGGESTED_EXERCISE_PROMPT, SYSTEM_PROMPT, ai_schema_type_json
+from run_compare.visualisation_utils import plot_to_date, speed_to_pace, distance_display
 from run_compare_app import app
 from run_compare.stravaio import StravaIO, run_server_and_wait_for_token, run_server_and_wait_for_token_
 from run_compare.strava_api_utils import get_strava_oauth2_url, get_activities, get_strava_token_from_url
-from flask import render_template, request, redirect, session, render_template_string, jsonify, url_for
+from flask import render_template, request, redirect, session, render_template_string, jsonify, url_for, make_response
 
-from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET, BASE_COLOR, INTERVAL_COLOR, N_ACTIVITIES, \
-    ai_schema_type_json
+from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET, BASE_COLOR, INTERVAL_COLOR, N_ACTIVITIES
 from plotly.utils import PlotlyJSONEncoder
 import json
 
@@ -40,23 +39,23 @@ def convert_activities_to_df(base_activities, inteval_activities):
     # Helper functions to format columns
     def format_distance(row):
         if row['source'] == 'base_activity':
-            return row['BASE_DISTANCE']
+            return distance_display(row['BASE_DISTANCE'])
         elif row['source'] == 'interval':
-            return f"{int(row['N_INTERVALS'])} X {row['INTERVAL_DISTANCE']}"
+            return f"{int(row['N_INTERVALS'])} X {distance_display(row['INTERVAL_DISTANCE'])}"
 
     def format_hr(row):
-        return row['BASE_HR'] if row['source'] == 'base_activity' else row['INTERVAL_HR']
+        return int(row['BASE_HR']) if row['source'] == 'base_activity' else int(row['INTERVAL_HR'])
 
     def format_speed(row):
-        return row['BASE_SPEED'] if row['source'] == 'base_activity' else row['INTERVAL_SPEED']
+        return speed_to_pace(row['BASE_SPEED']) if row['source'] == 'base_activity' else speed_to_pace(row['INTERVAL_SPEED'])
 
     # Create the formatted DataFrame
     formatted_df = pd.DataFrame({
-        'date': combined_df['date'],
+        'date': combined_df['date'].apply(lambda x: x.strftime("%d/%m/%Y")),
         'source': combined_df['source'],
         'distance': combined_df.apply(format_distance, axis=1),
         'HR': combined_df.apply(format_hr, axis=1),
-        'pace': combined_df.apply(format_speed, axis=1),
+        'pace': combined_df.apply(format_speed, axis=1),  # TODO: display pace hms
     })
 
     return formatted_df
@@ -110,7 +109,7 @@ def authorization_successful():
     base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
     session['base_activities'] = base_activities
     session['interval_activities'] = interval_activities
-    return redirect('/graph')
+    return  redirect('/graph')
 
 
 @app.route('/graph')
@@ -129,30 +128,79 @@ def page1():
     environment_template = render_template('index.html')
     graph_template = render_template('graph_page.html', graph_json=fig_json)
     environment_template = environment_template.replace('<!-- graph -->', graph_template)
-    return environment_template
+    response = make_response(environment_template)
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+
+    return response
 
 @app.route('/activities')
 def activities():
     df = convert_activities_to_df(base_activities=session['base_activities'],
                                   inteval_activities=session['interval_activities'])
-    session['activities_df'] = df
 
     # Convert DataFrame to HTML
-    html_table = df.to_html(classes='table table-striped')
+    # html_table = df.to_html(classes='table table-striped')
+    html_table = df.style.set_table_styles([
+        # General table styles
+        {'selector': 'table', 'props': [
+            ('border-collapse', 'collapse'),
+            ('width', '100%'),  # Ensure the table takes up the full width
+            ('font-family', 'Arial, sans-serif'),  # Nicer font
+            ('font-size', '14px'),  # Slightly larger font size
+        ]},
+        # Header styles
+        {'selector': 'th', 'props': [
+            ('background-color', '#f2f2f2'),  # Light grey background for header
+            ('color', '#333'),  # Dark text color for contrast
+            ('padding', '12px'),  # Add padding for more spacing
+            ('text-align', 'left'),  # Left-align text
+            ('border', '1px solid #ddd'),  # Border around header cells
+        ]},
+        # Data cell styles
+        {'selector': 'td', 'props': [
+            ('background-color', 'rgba(255, 255, 255, 0.8)'),  # Semi-transparent white
+            ('padding', '12px'),  # Add padding for more spacing
+            ('border', '1px solid #ddd'),  # Border around data cells
+            ('text-align', 'left'),  # Left-align text
+        ]},
+        # Row hover effect
+        {'selector': 'tr:hover', 'props': [
+            ('background-color', '#f1f1f1'),  # Light grey background on hover
+        ]}
+    ]).set_properties(**{
+        # Setting a min-width for all columns
+        'width': '150px',  # Wider columns for better readability
+    }).to_html()
     # Pass the HTML table to the template
     environment_template = render_template('index.html')
-    graph_template = render_template('table.html', table=html_table)
-    environment_template = environment_template.replace('<!-- graph -->', graph_template)
-    return environment_template
+    table_template = render_template('table.html', table=html_table)
+    environment_template = environment_template.replace('<!-- graph -->', table_template)
+    response = make_response(environment_template)
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+
+    return response
 
 @app.route('/ai')
 def ask_ai():
-    data = session['activities_df'].to_dict(orient='index')
+    df = convert_activities_to_df(base_activities=session['base_activities'],
+                                  inteval_activities=session['interval_activities'])
+    data = df.to_dict(orient='index')
     request = {'user_prompt': SUGGESTED_EXERCISE_PROMPT,
-               'system_prompt': SYSTEM_PROMPT,
+               'system_prompt': SYSTEM_PROMPT,  #still problem here TODO fix
                'schema': ai_schema_type_json,
                'context': data}
 
+    #post the request to the AI server at localhost port 3888
+    response = requests.post('http://localhost:3888/generate', json=request)
+    try:
+        print(eval(eval(response.text)['response']))
+    except:
+        pass
+    return response.json()
 
 
 def collect_data_for_fig(base_activities, interval_activities):
@@ -160,7 +208,7 @@ def collect_data_for_fig(base_activities, interval_activities):
     hr = [data['HR'] for data in base_activities]
     dspeed = [data['DSPEED'] for data in base_activities]
     dhr = [data['DHR'] for data in base_activities]
-    speed = [data['SPEED'] for data in base_activities]
+    speed = [data['SPEED'] for data in base_activities]  # TODO: fix pace display hms
     dates = [data['date'] for data in base_activities]
     marker_col = [BASE_COLOR] * len(distance)
 
@@ -174,12 +222,12 @@ def collect_data_for_fig(base_activities, interval_activities):
     imarker_col = [INTERVAL_COLOR] * len(idistance)
 
     lnk = lambda i: f'https://www.strava.com/activities/{base_activities[i]["id"]}'
-    dis = lambda i: np.around(distance[i] / 1000, decimals=1)
-    sp = lambda i: f'{int(np.floor(speed[i]))}:{int(np.round(60 * np.remainder(speed[i], 1))):02}'
+    dis = lambda i: np.around(distance[i] / 1000, decimals=1)   # TODO: fix distance display
+    sp = lambda i: speed_to_pace(speed[i])
     label_base = [
         f'<a href="{lnk(i)}"> {dis(i)}k <br> @{sp(i)} </a>' for i in range(len(distance))]
     lnk = lambda i: f'https://www.strava.com/activities/{interval_activities[i]["id"]}'
-    dis = lambda i: int(100 * np.around(idistance[i] / 1000, decimals=1))
+    dis = lambda i: int(100 * np.around(idistance[i] / 100, decimals=1))  # TODO: fix distance display
     sp = lambda i: f'{int(np.floor(ispeed[i]))}:{int(np.round(60 * np.remainder(ispeed[i], 1))):02}'
     label_int = [
         f'<a href="{lnk(i)}"> {n_int[i]}X{dis(i)}m  <br> @{sp(i)} </a>' for i in range(len(idistance))]

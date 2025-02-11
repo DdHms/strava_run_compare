@@ -1,65 +1,87 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Strava.comp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
-<!--    <script src="https://kit.fontawesome.com/a076d05399.js"></script>-->
-  </head>
-  <body>
-    <nav>
-      <input type="checkbox" id="check">
-      <label for="check" class="checkbtn">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+        <link rel="icon" href="{{ url_for('static', filename='styles/logo.ico') }}" type="image/x-icon">
+
+    <!--<script src="https://kit.fontawesome.com/a076d05399.js"></script>-->
+</head>
+<body>
+<nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="checkbtn">
         <i class="fas fa-bars"></i>
-      </label>
-      <label class="logo">Strava.comp</label>
-      <ul>
-<!--        <li><a class="active" href="#">Home</a></li>-->
-        <li><a href="#" onclick="fetch('/index', { method: 'POST' }); return false;">Login</a></li>
-        <li><a href="#"onclick="loadPage('.graph_page.html')">Graph</a></li>
-<!--        <li><a href="#">Contact</a></li>-->
-<!--        <li><a href="#">Feedback</a></li>-->
-      </ul>
-    </nav>
-<section id="content">'
+    </label>
+    <label class="logo">Strava.comp</label>
+    <ul>
+        <!--        <li><a class="active" href="#">Home</a></li>-->
+        <!--        <li><a href="#" onclick="fetch('/index', { method: 'POST' }); return false;">Login</a></li>-->
+        <li><a href="#" onclick="loadOverlay(); return false;">Login</a></li>
+        <li><a href="" onclick="loadPage('/graph')">Graph</a></li>
+        <li><a href="" onclick="loadPage('/activities')">Activities</a></li>
+        <li><a href="" onclick="loadPage('/ai')">AI</a></li>
+
+        <!--        <li><a href="#">Contact</a></li>-->
+        <!--        <li><a href="#">Feedback</a></li>-->
+    </ul>
+</nav>
+<section id="graph">
     <style>
         #plotly-div {
-            width: 100%;  /* Ensures the div takes full page width */
+            width: 100%;
         }
-        </style>
+    </style>
     <!-- graph -->'
 </section>
-<script>
-            window.onload = function(){
-             document.querySelector('#overlay > a').click();
-             checkAuthStatus();
-            }
-         </script>
-         </div>
-        </section>
-        <script>
-         function checkAuthStatus(){
-           fetch('/auth_complete')
-           .then(response => {
-             if (response.status === 200){
-               window.location.reload();
-             } else {
-               console.log("Auth in progress")
-                 setTimeout(checkAuthStatus, 1000)
-             }
-           })
-         }
 
-        function loadPage(url) {
-            fetch(url)
+<section id="activities">
+    <style>
+        #plotly-div {
+            width: 100%;
+        }
+    </style>
+    <!-- table -->'
+</section>
+
+
+<script>
+    // function checkAuthStatus() {
+    //     fetch('/auth_complete')
+    //         .then(response => {
+    //             if (response.status === 200) {
+    //                 window.location.reload();
+    //             } else {
+    //                 console.log("Auth in progress")
+    //                 setTimeout(checkAuthStatus, 1000)
+    //             }
+    //         })
+    // }
+
+    // window.onload = function () {
+    //     checkAuthStatus();
+    // }
+
+    function loadPage(url) {
+        fetch(url)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('content').innerHTML = html;
             })
             .catch(error => console.error('Error fetching page:', error));
-         }
+    }
 
-       </script>
-      </body>
-    </html>
+    function loadOverlay() {
+        fetch('/login')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('content').innerHTML = html;
+            })
+            .catch(error => console.error('Error fetching overlay:', error));
+    }
+
+</script>
+</body>
+</html>

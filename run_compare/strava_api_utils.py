@@ -11,7 +11,7 @@ from run_compare.stravaio import run_server_and_wait_for_token
 import urllib
 import webbrowser
 
-from run_compare_app import app
+# from run_compare_app import app
 
 activites_url = "https://www.strava.com/api/v3/athlete/activities"
 auth_url = "https://www.strava.com/oauth/token"
@@ -75,13 +75,13 @@ def get_strava_oauth2_url(client_id=None, client_secret=None, port=3475):
 def get_strava_token_from_url(url, client_id, client_secret, port=3475):
     """Starts the socket server in a thread and opens the Strava authorization URL."""
 
-    with app.app_context():
-        session["access_token"] = run_server_and_wait_for_token(
-                client_id=client_id,
-                client_secret=client_secret,
-                host="0.0.0.0",
-                port=port
-            )
+    # with app.app_context():
+    session["access_token"] = run_server_and_wait_for_token(
+            client_id=client_id,
+            client_secret=client_secret,
+            host="0.0.0.0",
+            port=port
+        )
 
 
 # Utility function for manual URL opening (replace or adapt for your use case)

@@ -5,9 +5,7 @@
     <title>Strava.comp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
-        <link rel="icon" href="{{ url_for('static', filename='styles/logo.ico') }}" type="image/x-icon">
-
-    <!--<script src="https://kit.fontawesome.com/a076d05399.js"></script>-->
+    <link rel="icon" href="{{ url_for('static', filename='styles/logo.ico') }}" type="image/x-icon">
 </head>
 <body>
 <nav>
@@ -15,51 +13,46 @@
     <label for="check" class="checkbtn">
         <i class="fas fa-bars"></i>
     </label>
-    <label class="logo">Strava.comp</label>
+    <label class="logo">Analize your runs</label>
     <ul>
-        <!--        <li><a class="active" href="#">Home</a></li>-->
-        <!--        <li><a href="#" onclick="fetch('/index', { method: 'POST' }); return false;">Login</a></li>-->
         <li><a href="#" onclick="loadOverlay(); return false;">Login</a></li>
         <li><a href="" onclick="loadPage('/graph')">Graph</a></li>
         <li><a href="" onclick="loadPage('/activities')">Activities</a></li>
         <li><a href="" onclick="loadPage('/ai')">AI</a></li>
-
-        <!--        <li><a href="#">Contact</a></li>-->
-        <!--        <li><a href="#">Feedback</a></li>-->
     </ul>
 </nav>
-<section id="content">
-    <style>
-        #plotly-div {
-            width: 100%;
-        }
-    </style>
-    <!-- graph -->'
+
+<!-- Reserved area for graph content -->
+<section id="welcome">
+    <div id="welcome-content">
+    </div>
+</section>
+<section id="graph">
+    <div id="graph-content">
+        <!-- graph -->
+    </div>
 </section>
 
+<!--&lt;!&ndash; Reserved area for activities (table) content &ndash;&gt;-->
+<!--<section id="activities">-->
+<!--    <div id="activities-content">-->
+<!--        &lt;!&ndash; table &ndash;&gt;-->
+<!--    </div>-->
+<!--</section>-->
+
+<!--&lt;!&ndash; Reserved area for AI content &ndash;&gt;-->
+<!--<section id="ai">-->
+<!--    <div id="ai-content">-->
+<!--        &lt;!&ndash; ai &ndash;&gt;-->
+<!--    </div>-->
+<!--</section>-->
 
 <script>
-    function checkAuthStatus() {
-        fetch('/auth_complete')
-            .then(response => {
-                if (response.status === 200) {
-                    window.location.reload();
-                } else {
-                    console.log("Auth in progress")
-                    setTimeout(checkAuthStatus, 1000)
-                }
-            })
-    }
-
-    window.onload = function () {
-        checkAuthStatus();
-    }
-
-    function loadPage(url) {
+    function loadPage(url, targetId) {
         fetch(url)
             .then(response => response.text())
             .then(html => {
-                document.getElementById('content').innerHTML = html;
+                document.getElementById(targetId).innerHTML = html;
             })
             .catch(error => console.error('Error fetching page:', error));
     }
@@ -68,11 +61,10 @@
         fetch('/login')
             .then(response => response.text())
             .then(html => {
-                document.getElementById('content').innerHTML = html;
+                document.getElementById('welcome-content').innerHTML = html;
             })
             .catch(error => console.error('Error fetching overlay:', error));
     }
-
 </script>
 </body>
 </html>

@@ -115,3 +115,12 @@ which can be installed using pip:
         import plotly.graph_objects as go
 
         return go.Figure(fig, skip_invalid=True)
+
+def speed_to_pace(speed):
+    return f'{int(np.floor(speed))}:{int(np.round(60 * np.remainder(speed, 1))):02}'
+
+def distance_display(distance):
+    if distance < 1000:
+        return f'{int(round(distance / 50) * 50)}m'
+    else:
+        return f'{round(distance / 500) / 2}km'
