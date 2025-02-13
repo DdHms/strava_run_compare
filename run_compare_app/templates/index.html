@@ -1,70 +1,74 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="utf-8">
-    <title>Strava.comp</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='styles/logo.ico') }}" type="image/x-icon">
-</head>
-<body>
-<nav>
-    <input type="checkbox" id="check">
-    <label for="check" class="checkbtn">
-        <i class="fas fa-bars"></i>
-    </label>
-    <label class="logo">Analize your runs</label>
-    <ul>
-        <li><a href="#" onclick="loadOverlay(); return false;">Login</a></li>
-        <li><a href="" onclick="loadPage('/graph')">Graph</a></li>
-        <li><a href="" onclick="loadPage('/activities')">Activities</a></li>
-        <li><a href="" onclick="loadPage('/ai')">AI</a></li>
-    </ul>
-</nav>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Analyze Your Runs</title>
+      <style>
+          /* Basic styling for navigation and content */
+          body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+          }
+          nav {
+              background: #333;
+              color: white;
+              padding: 10px;
+          }
+          nav ul {
+              margin: 0;
+              padding: 0;
+              list-style: none;
+              display: flex;
+          }
+          nav ul li {
+              margin-right: 15px;
+          }
+          nav ul li a {
+              color: white;
+              text-decoration: none;
+          }
+          #content {
+              padding: 20px;
+          }
+      </style>
+  </head>
+  <body>
+      <nav>
+          <ul>
+              <li><a href="#" onclick="loadPage('/login'); return false;">Login</a></li>
+              <li><a href="#" onclick="loadPage('/graph'); return false;">Graph</a></li>
+              <li><a href="#" onclick="loadPage('/activities'); return false;">Activities</a></li>
+              <li><a href="#" onclick="loadPage('/ai'); return false;">AI</a></li>
+          </ul>
+      </nav>
 
-<!-- Reserved area for graph content -->
-<section id="welcome">
-    <div id="welcome-content">
-    </div>
-</section>
-<section id="graph">
-    <div id="graph-content">
-        <!-- graph -->
-    </div>
-</section>
+      <!-- Single div section that updates dynamically -->
+      <div id="content">
+          <!-- Initial or default content can be placed here -->
+          <h2>Welcome to Analyze Your Runs!</h2>
+          <p>Select a menu option to view the content.</p>
+      </div>
 
-<!--&lt;!&ndash; Reserved area for activities (table) content &ndash;&gt;-->
-<!--<section id="activities">-->
-<!--    <div id="activities-content">-->
-<!--        &lt;!&ndash; table &ndash;&gt;-->
-<!--    </div>-->
-<!--</section>-->
-
-<!--&lt;!&ndash; Reserved area for AI content &ndash;&gt;-->
-<!--<section id="ai">-->
-<!--    <div id="ai-content">-->
-<!--        &lt;!&ndash; ai &ndash;&gt;-->
-<!--    </div>-->
-<!--</section>-->
-
-<script>
-    function loadPage(url, targetId) {
-        fetch(url)
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById(targetId).innerHTML = html;
-            })
-            .catch(error => console.error('Error fetching page:', error));
-    }
-
-    function loadOverlay() {
-        fetch('/login')
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('welcome-content').innerHTML = html;
-            })
-            .catch(error => console.error('Error fetching overlay:', error));
-    }
-</script>
-</body>
-</html>
+      <script>
+          // Function to fetch and load page content into the #content div
+          function loadPage(url) {
+              fetch(url)
+                  .then(function(response) {
+                      if (!response.ok) {
+                          throw new Error('Network response was not ok');
+                      }
+                      return response.text();
+                  })
+                  .then(function(html) {
+                      document.getElementById('content').innerHTML = html;
+                  })
+                  .catch(function(error) {
+                      console.error('Error fetching page:', error);
+                      document.getElementById('content').innerHTML = '<p>Error loading content. Please try again later.</p>';
+                  });
+          }
+      </script>
+  </body>
+  </html>
