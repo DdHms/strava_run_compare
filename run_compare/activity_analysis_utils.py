@@ -2,12 +2,15 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
+import ruptures as rpt
 from scipy.fft import fft, fftshift
 
-from run_compare.constants import wrap_interval_data, wrap_base_data, DECIMALS
 from run_compare.constants import BASE, INTERVAL
+from run_compare.constants import wrap_interval_data, wrap_base_data, DECIMALS
 from run_compare.strava_api_utils import upload_description_from_summary, exists_and_summarized, \
     summary_from_description
+
+
 # from run_compare.strvio import activity
 
 
@@ -17,6 +20,19 @@ def conv_sad(f, k):
         f_ = f[i:i + len(k)]
         sad.append(np.sum(np.abs((k - f_))))
     return np.asarray(sad)
+
+
+def segment_activity_with_ruptures(speed_smoothed, model="rbf", pen=10):
+    algo = rpt.Pelt(model=model).fit(speed_smoothed)
+    change_points = algo.predict(pen=pen)
+
+    # Output format: list of (start_idx, end_idx)
+    start_idx = 0
+    segments = []
+    for end_idx in change_points:
+        segments.append((start_idx, end_idx))
+        start_idx = end_idx
+    return segments
 
 
 def debug_intervals(distance, speed_smoothed, matching, det, high_matches, first_sprint_abs_idxs, last_sprint_abs_idxs,
@@ -133,6 +149,32 @@ def extract_interval_data(alternations, distance, speed, hr, speed_smoothed):
     # TODO: improve interval start-end times
     return wrap_interval_data(n_intervals, med_dist, med_int_speed, d_speeds, med_int_hr, d_hr)
 
+def extract_multi_interval_data_with_ruptures(speed_smoothed, distance, speed, hr):
+    distance = np.asarray(distance)
+    speed = np.asarray(speed)
+    hr = np.asarray(hr)
+
+    segments = segment_activity_with_ruptures(speed_smoothed)
+
+    interval_summaries = []
+
+    for (start, end) in segments:
+        seg_speed = speed_smoothed[start:end]
+        if is_periodic(seg_speed):
+            # Find alternations *within* this segment
+            alternations = find_intervals(seg_speed)
+            if len(alternations) >= 2:
+                # Offset alternation indices to global indices
+                alternations = alternations + start
+                summary = extract_interval_data(alternations, distance, speed, hr, speed_smoothed)
+                interval_summaries.append(summary)
+
+    if not interval_summaries:
+        print("No valid interval blocks found with ruptures, falling back to base effort")
+        return extract_base_data(speed_smoothed, distance, hr)
+
+    return interval_summaries
+
 
 def activity_summarize(stream, kernel_width=50):
     distance = stream.distance
@@ -144,7 +186,7 @@ def activity_summarize(stream, kernel_width=50):
     speed_smoothed = np.convolve(speed, kernel, 'same')
     if is_periodic(speed_smoothed):  # interval
         alternations = find_intervals(speed_smoothed)
-        summary = extract_interval_data(alternations, distance, speed, hr, speed_smoothed)
+        summary = extract_multi_interval_data_with_ruptures(speed_smoothed, distance, speed, hr)
     else:  # Base
         summary = extract_base_data(speed_smoothed, distance, hr)
     return summary
