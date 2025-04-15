@@ -5,3 +5,4 @@ matplotlib==3.4.3
 git+git://github.com/SantoshML/python-client@master
 stravaio==0.0.9
 scipy==1.11.4
+gradio==5.25.1
