@@ -6,3 +6,6 @@ git+git://github.com/SantoshML/python-client@master
 stravaio==0.0.9
 scipy==1.11.4
 gradio==5.25.1
+gevent==24.11.1
+boto3==1.37.34
+kaleido==0.2.1
