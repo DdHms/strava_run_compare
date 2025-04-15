@@ -76,6 +76,19 @@ def main():
     print(oauth_url)
     return render_template('welcome.html', url=oauth_url)
 
+@app.route('/test')
+def test():
+    html_content = '''
+        <h2>Login Page</h2>
+        <p>Please enter your credentials below:</p>
+        <form action="/authenticate" method="post">
+            <input type="text" name="username" placeholder="Username">
+            <input type="password" name="password" placeholder="Password">
+            <button type="submit">Login</button>
+        </form>
+        '''
+    return render_template_string(html_content)
+
 @app.route('/authorization_successful')#, methods=['GET'])
 def authorization_successful():
     # Extract the authorization code from the query parameters
@@ -126,14 +139,14 @@ def page1():
     fig_json = json.dumps(fig, cls=PlotlyJSONEncoder)
 
     environment_template = render_template('index.html')
-    graph_template = render_template('graph_page.html', graph_json=fig_json)
+    graph_template = render_template('graph_page.html').replace('graph_json', fig_json)
     environment_template = environment_template.replace('<!-- graph -->', graph_template)
     response = make_response(environment_template)
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
 
-    return response
+    return graph_template
 
 @app.route('/activities')
 def activities():
@@ -182,7 +195,7 @@ def activities():
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
 
-    return response
+    return table_template
 
 @app.route('/ai')
 def ask_ai():

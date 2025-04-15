@@ -1,20 +1,62 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import requests
-import threading
-from run_compare.activity_analysis_utils import calculate_analysis, gather_data_for_plotting
-from run_compare.prompt_constants import SUGGESTED_EXERCISE_PROMPT, SYSTEM_PROMPT, ai_schema_type_json
-from run_compare.visualisation_utils import plot_to_date, speed_to_pace, distance_display
-from run_compare.stravaio import StravaIO
-from run_compare.strava_api_utils import get_strava_oauth2_url, get_activities
-from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET, BASE_COLOR, INTERVAL_COLOR, N_ACTIVITIES
-from plotly.utils import PlotlyJSONEncoder
 import json
+import sys
+import threading
+
+import pandas as pd
+import requests
+import streamlit as st
+from flask import Flask
+from flask import request
+from streamlit_oauth import OAuth2Component
+
+from run_compare.activity_analysis_utils import calculate_analysis, gather_data_for_plotting
+from run_compare.constants import APP_CLIENT_ID, APP_CLIENT_SECRET, N_ACTIVITIES, \
+    REVOKE_TOKEN_URL, REFRESH_TOKEN_URL, TOKEN_URL, AUTHORIZE_URL, SCOPE, REDIRECT_URI
+from run_compare.prompt_constants import SUGGESTED_EXERCISE_PROMPT, SYSTEM_PROMPT, ai_schema_type_json
+from run_compare.strava_api_utils import get_activities
+from run_compare.stravaio import StravaIO
+from run_compare.visualisation_utils import plot_to_date, speed_to_pace, distance_display
+from run_compare_app.compare import collect_data_for_fig
+
+sys.path.insert(0, '/home/hms/local_llm_server')
+from llm_server.app import main as llm_server_main
 
 # Global session management
-global_session = {}
 session_ready = threading.Event()
+
+flask_app = Flask('auth')
+flask_port = 3476  # Choose a port that's likely to be free
+
+@flask_app.route('/' ,methods = ['POST', 'GET'])
+def authorization_successful():
+    authorization_code = request.args.get('code')
+    if authorization_code:
+        # Save the code to the global session
+        response = requests.post(
+            "https://www.strava.com/oauth/token",
+            data={
+                "client_id": APP_CLIENT_ID,
+                "client_secret": APP_CLIENT_SECRET,
+                "code": authorization_code,
+                "grant_type": "authorization_code"
+            }
+        )
+        response_data = response.json()
+        STRAVA_ACCESS_TOKEN = response_data['access_token']
+        global_session = {}
+        global_session['token'] = STRAVA_ACCESS_TOKEN
+        dumps = json.dumps(global_session)
+        with open("global.json", "w") as outfile:
+            outfile.write(dumps)
+        session_ready.set()  # Signal that the code is ready
+        return "Authorization successful! You can close this tab now."
+    else:
+        return "Authorization failed.", 400
+
+def run_flask_app():
+    flask_app.run(port=flask_port, debug=False, use_reloader=False)
+
+
 
 def convert_activities_to_df(base_activities, inteval_activities):
     base_df = pd.DataFrame(base_activities)
@@ -51,86 +93,65 @@ def convert_activities_to_df(base_activities, inteval_activities):
 
     return formatted_df
 
-def collect_data_for_fig(base_activities, interval_activities):
-    distance = [data['DISTANCE'] for data in base_activities]
-    hr = [data['HR'] for data in base_activities]
-    dspeed = [data['DSPEED'] for data in base_activities]
-    dhr = [data['DHR'] for data in base_activities]
-    speed = [data['SPEED'] for data in base_activities]
-    dates = [data['date'] for data in base_activities]
-    marker_col = [BASE_COLOR] * len(distance)
-
-    idistance = [data['INTERVAL_DISTANCE'] for data in interval_activities]
-    n_int = [data['N_INTERVALS'] for data in interval_activities]
-    ihr = [data['INTERVAL_HR'] for data in interval_activities]
-    idspeed = [data['DSPEED'] for data in interval_activities]
-    idhr = [data['DHR'] for data in interval_activities]
-    ispeed = [data['INTERVAL_SPEED'] for data in interval_activities]
-    idates = [data['date'] for data in interval_activities]
-    imarker_col = [INTERVAL_COLOR] * len(idistance)
-
-    ord = np.argsort(dates + idates)
-    all_dates = sorted(dates + idates)
-    all_speeds = np.array(speed + ispeed)[ord].tolist()
-    all_dspeeds = np.array(dspeed + idspeed)[ord].tolist()
-    all_hr = np.array(hr + ihr)[ord].tolist()
-    all_dhr = np.array(dhr + idhr)[ord].tolist()
-    all_marker_col = np.array(marker_col + imarker_col)[ord].tolist()
-    return {'all_dates': all_dates,
-            'all_speeds': all_speeds,
-            'all_dspeeds': all_dspeeds,
-            'all_hr': all_hr,
-            'all_dhr': all_dhr,
-            'all_marker_col': all_marker_col}
 
 def main():
+    global_session = {}
+    flask_thread = threading.Thread(target=run_flask_app, daemon=True)
+    ai_thread = threading.Thread(target=llm_server_main, daemon=True)
+    with st.spinner("Starting AI server..."):
+        ai_thread.start()
+    with st.spinner("Starting authorization server..."):
+        flask_thread.start()
     st.title("Run Compare App")
-
-    if 'code' not in global_session:
-        oauth_url = get_strava_oauth2_url(client_id=APP_CLIENT_ID, client_secret=APP_CLIENT_SECRET, port=8001)
-        st.markdown(f"[Authorize with Strava]({oauth_url})")
-    else:
-        authorization_code = global_session['code']
-        response = requests.post(
-            "https://www.strava.com/oauth/token",
-            data={
-                "client_id": APP_CLIENT_ID,
-                "client_secret": APP_CLIENT_SECRET,
-                "code": authorization_code,
-                "grant_type": "authorization_code"
-            }
-        )
-        response_data = response.json()
-        STRAVA_ACCESS_TOKEN = response_data['access_token']
-        client = StravaIO(access_token=STRAVA_ACCESS_TOKEN)
-        athlete = client.get_logged_in_athlete()
+    activities_tab, graph_tab, ai_tab = st.tabs(tabs=['Activities', 'Graph', 'AI trainer'])
+    oauth2 = OAuth2Component(APP_CLIENT_ID, APP_CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, REFRESH_TOKEN_URL,
+                             REVOKE_TOKEN_URL)
+    with st.sidebar:
+        result = oauth2.authorize_button("Authorize", REDIRECT_URI, SCOPE)
+    while 'token' not in global_session:
+        try:
+            with open('global.json', 'r') as openfile:
+                # Reading from json file
+                global_session = json.load(openfile)
+        except:
+            pass
+    STRAVA_ACCESS_TOKEN = st.session_state['strava_access_token'] = global_session['token']
+    client = StravaIO(access_token=STRAVA_ACCESS_TOKEN)
+    athlete = client.get_logged_in_athlete()
+    if athlete is not None:
         athlete_dict = athlete.to_dict()
         st.sidebar.write(f"Logged in as {athlete_dict['firstname']} {athlete_dict['lastname']}")
 
-        non_summarized, full_run_activities = get_activities(access_token=STRAVA_ACCESS_TOKEN,
-                                                             invalidate_history=False,
-                                                             num_activities=N_ACTIVITIES)
-        for activity in non_summarized:
-            calculate_analysis(athlete_id=athlete.id, activity_id=activity['id'], client=client)
+        with st.spinner("Downloading activities..."):
+            non_summarized, full_run_activities = get_activities(access_token=STRAVA_ACCESS_TOKEN,
+                                                                 invalidate_history=False,
+                                                                 num_activities=N_ACTIVITIES)
+        with st.spinner("Analyzing activities..."):
+            for activity in non_summarized:
+                calculate_analysis(athlete_id=athlete.id, activity_id=activity['id'], client=client)
 
-        base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
+            base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
 
-        st.sidebar.write("## Activity Data")
-        if st.sidebar.button("Show Graph"):
+        with graph_tab:
+            st.write("## Activity Graph")
             fig_data = collect_data_for_fig(base_activities, interval_activities)
 
-            fig = plot_to_date(fig_data['all_dates'], fig_data['all_speeds'], fig_data['all_dspeeds'], color='rgba(0,100,255,',
-                               name='Speed [min/km]', marker_col=fig_data['all_marker_col'])
+            fig = plot_to_date(fig_data['all_dates'], fig_data['all_speeds'], fig_data['all_dspeeds'],
+                               color='rgba(0,100,255,',
+                               name='Speed [min/km]', label=fig_data['all_labels'], marker_col=fig_data['all_marker_col'])
             fig = plot_to_date(fig_data['all_dates'], fig_data['all_hr'], fig_data['all_dhr'], color='rgba(255,100,0,',
-                               name='HR [BPM]', add_to_fig=fig, separate=True)
+                               name='HR [BPM]', label=[f'{int(hr)}\U0001fac0' for hr in fig_data['all_hr']], add_to_fig=fig,
+                               separate=True)
+
+            # display df.html as an html component:
 
             st.plotly_chart(fig)
-
-        if st.sidebar.button("Show Activities Table"):
+        with activities_tab:
+            st.write("Show Activities Table")
             df = convert_activities_to_df(base_activities, interval_activities)
             st.dataframe(df)
-
-        if st.sidebar.button("Ask AI"):
+        with ai_tab:
+            st.write("Ask AI")
             df = convert_activities_to_df(base_activities, interval_activities)
             data = df.to_dict(orient='index')
             request = {'user_prompt': SUGGESTED_EXERCISE_PROMPT,
@@ -139,7 +160,15 @@ def main():
                        'context': data}
 
             response = requests.post('http://localhost:3888/generate', json=request)
-            st.write(response.json())
-
+            json_response = response.json()
+            st.write('### Overall Progress:')
+            chat_answer = json.loads(json_response['response'])
+            st.write(chat_answer['progress'])
+            st.write('### Next AI Suggested Run:')
+            exercise_type = chat_answer['next_suggested_run']['type']
+            st.write(f'#### {exercise_type}')
+            for exercise in chat_answer['next_suggested_run']['plan']:
+                ln = f"{exercise['repetitions']} X {exercise['distance']}m @ {exercise['target_pace']} min/km, {exercise['target_heart_rate']} BPM rest time: {exercise['rest_time']} min \n"
+                st.write(ln)
 if __name__ == "__main__":
     main()

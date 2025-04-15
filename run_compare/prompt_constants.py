@@ -77,12 +77,12 @@ class Exercise(TypedDict):
     distance: float
     target_pace: float
     target_heart_rate: int
-    repetiotions: int
+    repetitions: int
     rest_time: float
     descriptions = {'distance': 'The exercise distance in meters',
                     'target_pace': 'The target running pace in minutes per kilometer',
                     'target_heart_rate': 'The target heart rate in beats per minute',
-                    'repetiotions': 'The number of repetitions if is an interval workout otherwise 1',
+                    'repetitions': 'The number of repetitions if is an interval workout otherwise 1',
                     'rest_time': 'The rest time between repetitions in minutes',
                     }
 

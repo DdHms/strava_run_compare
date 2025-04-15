@@ -12,6 +12,15 @@ APP_CLIENT_ID = '94807'
 APP_CLIENT_SECRET = '6a9c293a602a6acefb1d7a2feb3d92242495dcf5'
 BASE_COLOR = 'rgba(0,100,255,1)'
 INTERVAL_COLOR = 'rgba(0,200,200,1)'
+AUTHORIZE_URL = "https://www.strava.com/oauth/authorize"
+TOKEN_URL = "https://www.strava.com/oauth/token"
+# For token refresh, Strava uses the same TOKEN_URL
+REFRESH_TOKEN_URL = "https://www.strava.com/oauth/token"
+# Strava deauthorization endpoint to revoke tokens
+REVOKE_TOKEN_URL = "https://www.strava.com/oauth/deauthorize"
+SCOPE = 'read,profile:read_all,activity:write,activity:read'
+REDIRECT_URI = 'https://hms-thinkcentre-m93p.taile37d5a.ts.net/authorization_successful/'
+
 
 def wrap_interval_data(n_intervals, interval_distance, interval_speeds, d_speeds, intervals_hr, d_hr):
     return {'type': INTERVAL,
@@ -30,4 +39,5 @@ def wrap_base_data(distance, speed, d_speeds, hr, d_hr):
                      'HR': np.around(np.float64(hr), decimals=DECIMALS),
                      'DSPEED': np.around(np.float64(d_speeds), decimals=DECIMALS),
                      'DHR': np.around(np.float64(d_hr), decimals=0)}}
+
 
