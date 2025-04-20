@@ -1,4 +1,5 @@
 import json
+import socket
 import sys
 import threading
 
@@ -24,6 +25,13 @@ from llm_server.app import main as llm_server_main
 # Global session management
 session_ready = threading.Event()
 
+st.set_page_config(
+    page_title="Run compare",              # Title in browser tab
+    page_icon="static/styles/logo.ico",     # Local image OR emoji OR URL
+    # layout="centered",                # or "wide"
+    # initial_sidebar_state="auto"
+)
+
 flask_app = Flask('auth')
 flask_port = 3476  # Choose a port that's likely to be free
 
@@ -31,20 +39,30 @@ flask_port = 3476  # Choose a port that's likely to be free
 def authorization_successful():
     authorization_code = request.args.get('code')
     if authorization_code:
+        print(f'Got authorization code: {authorization_code}')
         # Save the code to the global session
-        response = requests.post(
-            "https://www.strava.com/oauth/token",
-            data={
-                "client_id": APP_CLIENT_ID,
-                "client_secret": APP_CLIENT_SECRET,
-                "code": authorization_code,
-                "grant_type": "authorization_code"
-            }
-        )
-        response_data = response.json()
+        data = {
+            "client_id": APP_CLIENT_ID,
+            "client_secret": APP_CLIENT_SECRET,
+            "code": authorization_code,
+            "grant_type": "authorization_code"
+        }
+        print(f'posting: {data}')
+        import subprocess
+
+        # Define the curl command
+        curl_command = [
+            "curl",
+            "-X", "POST",
+            f"https://www.strava.com/api/v3/oauth/token?client_id={APP_CLIENT_ID}&client_secret={APP_CLIENT_SECRET}&code={authorization_code}&grant_type=authorization_code"
+        ]
+        result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
+        response_data = json.loads(result.stdout)
         STRAVA_ACCESS_TOKEN = response_data['access_token']
+        print(f' Received access token: {STRAVA_ACCESS_TOKEN}')
         global_session = {}
         global_session['token'] = STRAVA_ACCESS_TOKEN
+        global_session['athlete'] = response_data['athlete']
         dumps = json.dumps(global_session)
         with open("global.json", "w") as outfile:
             outfile.write(dumps)
@@ -99,9 +117,16 @@ def main():
     flask_thread = threading.Thread(target=run_flask_app, daemon=True)
     ai_thread = threading.Thread(target=llm_server_main, daemon=True)
     with st.spinner("Starting AI server..."):
-        ai_thread.start()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        not_open = sock.connect_ex(('127.0.0.1', 3888))
+        if not_open:
+            ai_thread.start()
+
     with st.spinner("Starting authorization server..."):
-        flask_thread.start()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        not_open = sock.connect_ex(('127.0.0.1', flask_port))
+        if not_open:
+            flask_thread.start()
     st.title("Run Compare App")
     activities_tab, graph_tab, ai_tab = st.tabs(tabs=['Activities', 'Graph', 'AI trainer'])
     oauth2 = OAuth2Component(APP_CLIENT_ID, APP_CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, REFRESH_TOKEN_URL,
@@ -117,10 +142,9 @@ def main():
             pass
     STRAVA_ACCESS_TOKEN = st.session_state['strava_access_token'] = global_session['token']
     client = StravaIO(access_token=STRAVA_ACCESS_TOKEN)
-    athlete = client.get_logged_in_athlete()
+    athlete = global_session['athlete']
     if athlete is not None:
-        athlete_dict = athlete.to_dict()
-        st.sidebar.write(f"Logged in as {athlete_dict['firstname']} {athlete_dict['lastname']}")
+        st.sidebar.write(f"Logged in as {athlete['firstname']} {athlete['lastname']}")
 
         with st.spinner("Downloading activities..."):
             non_summarized, full_run_activities = get_activities(access_token=STRAVA_ACCESS_TOKEN,
@@ -128,7 +152,7 @@ def main():
                                                                  num_activities=N_ACTIVITIES)
         with st.spinner("Analyzing activities..."):
             for activity in non_summarized:
-                calculate_analysis(athlete_id=athlete.id, activity_id=activity['id'], client=client)
+                calculate_analysis(athlete_id=athlete['id'], activity_id=activity['id'], client=client)
 
             base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
 
