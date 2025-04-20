@@ -1,6 +1,6 @@
 lucidity==1.6.0
-flask==3.0.3
-matplotlib
+flask==2.3.2
+matplotlib==3.4.3
 #plotly
 #git+git://github.com/SantoshML/python-client@master
 stravaio==0.0.9
@@ -12,3 +12,7 @@ plotly==6.0.0
 matplotlib-inline==0.1.7
 requests==2.32.2
 ruptures==1.1.9
+gradio==5.25.1
+gevent==24.11.1
+boto3==1.37.34
+kaleido==0.2.1

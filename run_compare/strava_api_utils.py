@@ -1,4 +1,6 @@
+import json
 import os
+import subprocess
 import threading
 
 from flask import request, redirect, session
@@ -169,8 +171,9 @@ def get_athlete_activities(access_token, n, after=None):
                      f"per_page={n}&access_token={access_token}"
     if after is not None:
         activities_url += f'&after={after}' # empty string starts from day 0!!
-    response = requests.get(activities_url)
-    return response.json()
+    result = subprocess.run(f"curl -X GET '{activities_url}'", shell=True, capture_output=True)
+    response = json.loads(result.stdout)
+    return response
 
 
 def get_run_activities(activities_json):
@@ -183,7 +186,9 @@ def get_full_activities(access_token, activities_list):
     for i, act in enumerate(activities_list):
         url = f"https://www.strava.com/api/v3/activities/{act['id']}/?" \
               f"access_token={access_token}"
-        full_activities_list[i] = requests.get(url).json()
+        result = subprocess.run(f"curl --location '{url}'", shell=True, capture_output=True)
+        full_activities_list[i] = json.loads(result.stdout)
+        # full_activities_list[i] = requests.get(url).json()
     return full_activities_list
 
 

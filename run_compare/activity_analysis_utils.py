@@ -9,8 +9,6 @@ from run_compare.constants import BASE, INTERVAL
 from run_compare.constants import wrap_interval_data, wrap_base_data, DECIMALS
 from run_compare.strava_api_utils import upload_description_from_summary, exists_and_summarized, \
     summary_from_description
-
-
 # from run_compare.strvio import activity
 
 
