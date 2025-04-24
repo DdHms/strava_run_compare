@@ -152,7 +152,7 @@ def main():
                                                                  num_activities=N_ACTIVITIES)
         with st.spinner("Analyzing activities..."):
             for activity in non_summarized:
-                calculate_analysis(athlete_id=athlete['id'], activity_id=activity['id'], client=client)
+                calculate_analysis(activity_id=activity['id'], access_token=STRAVA_ACCESS_TOKEN)
 
             base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
 

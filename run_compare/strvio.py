@@ -24,7 +24,7 @@ if not OFFLINE:
     non_summarized, full_run_activities = get_activities(access_token=STRAVA_ACCESS_TOKEN['access_token'],
                                                          invalidate_history=INVALIDATE_HISTORY)
     for activity in non_summarized:
-        calculate_analysis(athlete.id, activity['id'], client, debug=DEBUG)
+        calculate_analysis(activity['id'], access_token=STRAVA_ACCESS_TOKEN, debug=DEBUG)
     base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
 
 print('start')

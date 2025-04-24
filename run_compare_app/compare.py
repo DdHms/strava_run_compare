@@ -118,7 +118,7 @@ def authorization_successful():
     non_summarized, full_run_activities = get_activities(access_token=session['access_token'], invalidate_history=False,
                                                          num_activities=N_ACTIVITIES)
     for activity in non_summarized:
-        calculate_analysis(athlete_id=session['athlete_id'], activity_id=activity['id'], client=client)
+        calculate_analysis(activity_id=activity['id'], access_token=session['access_token'], debug=False)
     base_activities, interval_activities = gather_data_for_plotting(activity_list=full_run_activities)
     session['base_activities'] = base_activities
     session['interval_activities'] = interval_activities

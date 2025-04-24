@@ -1,3 +1,5 @@
+import json
+import subprocess
 from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -183,18 +185,28 @@ def activity_summarize(stream, kernel_width=50):
     kernel = kernel / np.sum(kernel)
     speed_smoothed = np.convolve(speed, kernel, 'same')
     if is_periodic(speed_smoothed):  # interval
-        alternations = find_intervals(speed_smoothed)
+        # alternations = find_intervals(speed_smoothed)
         summary = extract_multi_interval_data_with_ruptures(speed_smoothed, distance, speed, hr)
     else:  # Base
         summary = extract_base_data(speed_smoothed, distance, hr)
     return summary
 
 
-def calculate_analysis(athlete_id, activity_id, client, debug=False):
+def calculate_analysis(activity_id, access_token, debug=False):
     if not debug:
         print(f'loading activity {activity_id}')
         try:
-            stream = client.get_activity_streams(activity_id, athlete_id)
+            # stream = client.get_activity_streams(activity_id, athlete_id)
+            keys = ['time', 'distance', 'latlng', 'altitude', 'velocity_smooth',
+                    'heartrate', 'cadence', 'watts', 'temp', 'moving', 'grade_smooth']
+            result = subprocess.run(f"curl --location --request GET 'https://www.strava.com/api/v3/activities/{activity_id}/streams?keys={','.join(keys)}&key_by_type=true&access_token={access_token}'",
+                                    shell=True, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"Error fetching activity streams: {result.stderr}")
+            data = json.loads(result.stdout)
+            data = {k: v.get('data') for k, v in data.items()}
+            Stream = type('Stream', (object,), data)
+            stream = Stream()
 
         except Exception as e:
             print(f'{activity_id} encountered exception {e}')
@@ -203,7 +215,8 @@ def calculate_analysis(athlete_id, activity_id, client, debug=False):
                 exit(1)
     else:
         print(f'loading activity {8704660889}')
-        stream = next(client.local_streams(athlete_id=athlete_id))
+        print('Deprecated for now...')
+        # stream = next(client.local_streams(athlete_id=athlete_id))
 
     x = stream.distance
     y = stream.velocity_smooth
@@ -213,7 +226,7 @@ def calculate_analysis(athlete_id, activity_id, client, debug=False):
     if len(x) > 0 and len(y) > 0:
         summary = activity_summarize(stream)
         print(summary)
-        upload_description_from_summary(summary, activity_id=activity_id, client=client)
+        upload_description_from_summary(summary, activity_id=activity_id, access_token=access_token)
 
 
 def gather_data_for_plotting(activity_list):

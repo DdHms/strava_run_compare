@@ -113,18 +113,18 @@ def fetch_token():
     return access_token
 
 
-def upload_description_from_summary(summary, activity_id, client):
+def upload_description_from_summary(summary, activity_id, access_token):
     body = swagger_client.UpdatableActivity()
     if summary['type'] == constants.INTERVAL:
         data_block = eval("f'" + constants.INTERVAL_BLOCK_TEMPLATE + "'")
     elif summary['type'] == constants.BASE:
         data_block = eval("f'" + BASE_BLOCK_TEMPLATE + "'")
     textual_summary = f'{DESCRIPTION_HEADER}{data_block}{DESCRIPTION_FOOTER}'
-    # url = f"https://www.strava.com/api/v3/activities/{activity_id}/?" \
-    #       f"access_token={access_token}"
+    url = f"https://www.strava.com/api/v3/activities/{activity_id}?" \
+          f"access_token={access_token}"
     # requests.put(url, {'description': '#<<<<<-------------ACTIVITY SUMMARY START------------->>>>>#\n testing'})
-    body.description = textual_summary
-    client.activities_api.update_activity_by_id(activity_id, body=body)
+    result = subprocess.run(f"curl --location --request PUT '{url}' --header 'Content-Type: application/x-www-form-urlencoded' --data-urlencode 'description={textual_summary}'", shell=True, capture_output=True)
+
 
     pass
 
