@@ -1,0 +1,137 @@
+* {
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  list-style: none;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Montserrat', sans-serif;
+}
+nav {
+  background: #0082e6;
+  height: 80px;
+  width: 100%;
+}
+label.logo {
+  color: white;
+  font-size: 35px;
+  line-height: 80px;
+  padding: 0 100px;
+  font-weight: bold;
+}
+nav ul {
+  float: right;
+  margin-right: 20px;
+}
+nav ul li {
+  display: inline-block;
+  line-height: 80px;
+  margin: 0 5px;
+}
+nav ul li a {
+  color: white;
+  font-size: 17px;
+  padding: 7px 13px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+a.active,
+a:hover {
+  background: #1b9bff;
+  transition: 0.5s;
+}
+.checkbtn {
+  font-size: 30px;
+  color: white;
+  float: right;
+  line-height: 80px;
+  margin-right: 40px;
+  cursor: pointer;
+  display: none;
+}
+#check {
+  display: none;
+}
+/* Add this CSS to your stylesheet */
+@media (max-width: 300px) {
+    nav {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    nav ul li {
+        width: 100%;
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    nav ul li a {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        text-decoration: none;
+    }
+}
+
+  a:hover,
+  a.active {
+    background: none;
+    color: #0082e6;
+  }
+  #check:checked ~ ul {
+    left: 0;
+  }
+
+@media (max-width: 400px) {
+  nav {
+    height: 60px;
+  }
+  label.logo {
+    font-size: 25px;
+    line-height: 60px;
+    padding-left: 30px;
+  }
+  .checkbtn {
+    font-size: 25px;
+    line-height: 60px;
+    margin-right: 20px;
+  }
+  section {
+    height: calc(100vh - 60px);
+  }
+}
+section {
+  background: url(bg.jpeg) no-repeat center center;
+  background-size: cover;
+  height: calc(100vh - 80px);
+}
+@media (max-width: 400px) {
+  section {
+    background-size: contain;
+    background-position: top center;
+    height: calc(100vh - 60px);
+  }
+}
+@media (max-width: 400px) {
+  label.logo {
+    font-size: 20px;
+  }
+  nav ul li a {
+    font-size: 18px;
+    padding: 5px 8px;
+  }
+  .checkbtn {
+    font-size: 20px;
+    margin-right: 10px;
+  }
+}

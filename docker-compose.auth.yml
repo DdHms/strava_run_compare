@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  strava-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile.auth
+    container_name: strava-auth
+    ports:
+      - "3476:3476"
+    volumes:
+      - ./global.json:/app/global.json
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TOKEN_FILE_PATH=/app/global.json
+    restart: unless-stopped

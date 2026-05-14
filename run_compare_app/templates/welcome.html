@@ -1,0 +1,74 @@
+    <!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #eee;
+            margin: 0;
+            padding: 0;
+        }
+        a, h1 {
+            color: #377BA8;
+        }
+        h1, h2 {
+            font-family: 'Georgia', serif;
+            margin: 0;
+        }
+        h1 {
+            border-bottom: 2px solid #eee;
+            font-size: 2em;
+        }
+        h2 {
+            color: #000000;
+            font-size: 1.2em;
+        }
+        .page {
+            margin: 2em auto;
+            max-width: 90%;
+            width: 600px;
+            border: 5px solid #dc0707;
+            padding: 2em;
+            background: white;
+        }
+        .metanav {
+            text-align: left;
+            font-size: 0.8em;
+            padding: 0.3em;
+            margin-bottom: 1em;
+            background: #fafafa;
+        }
+        @media (max-width: 768px) {
+            .page {
+                padding: 1em;
+            }
+            h1, h2 {
+                font-size: 1.5em;
+            }
+            .metanav {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    </head>
+    <body>
+    <div class="page" style="text-align: center">
+      <h1>Welcome to our Strava app!</h1>
+      <div class="metanav" style="text-align: center">
+        <h3>This app does magic.</h3>
+        <h3>
+          <a href="{{ url }}" target="_blank">Login to Strava</a>
+        </h3>
+        <script>
+            // window.onload = function(){
+            //     document.querySelector('#overlay > a').click();
+            //     checkAuthStatus();
+            // }
+        </script>
+      </div>
+    </div>
+    </body>
+    </html>

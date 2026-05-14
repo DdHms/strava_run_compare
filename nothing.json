@@ -1,0 +1,47 @@
+{
+  'main_exercise_end_distance': 5400,
+  'main_exercise_start_distance': 1000,
+  'run_description': [
+    {
+      'distance': 1000,
+      'exercise_type': 'warmup',
+      'heart_rate': 140,
+      'pace': 6.0,
+      'relative_end_distance': 1000,
+      'relative_start_distance': 0,
+      'repetitions': 1,
+      'rest_distance': 0
+    },
+    {
+      'distance': 800,
+      'exercise_type': 'interval',
+      'heart_rate': 170,
+      'pace': 4.0,
+      'relative_end_distance': 5400,
+      'relative_start_distance': 1000,
+      'repetitions': 4,
+      'rest_distance': 0
+    },
+    {
+      'distance': 400,
+      'exercise_type': 'base',
+      'heart_rate': 150,
+      'pace': 5.3,
+      'relative_end_distance': 5800,
+      'relative_start_distance': 1800,
+      'repetitions': 4,
+      'rest_distance': 0
+    },
+    {
+      'distance': 1000,
+      'exercise_type': 'cooldown',
+      'heart_rate': 130,
+      'pace': 6.5,
+      'relative_end_distance': 6800,
+      'relative_start_distance': 5800,
+      'repetitions': 1,
+      'rest_distance': 0
+    }
+  ],
+  'type': 'interval'
+}

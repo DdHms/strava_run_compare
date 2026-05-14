@@ -1,0 +1,13 @@
+numpy==1.26.4
+lucidity==1.6.0
+flask==2.3.2
+matplotlib==3.10.7
+plotly==6.5.0
+#git+git://github.com/SantoshML/python-client@master
+stravaio==0.0.9
+scipy==1.16.3
+gradio==5.25.1
+gevent==24.11.1
+boto3==1.37.34
+kaleido==0.2.1
+streamlit-oauth==0.1.14

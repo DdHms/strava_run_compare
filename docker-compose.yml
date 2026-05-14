@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  strava-run-compare:
+    build: .
+    container_name: strava-run-compare
+    ports:
+      - "8501:8501"  # Streamlit UI
+      - "3476:3476"  # Flask OAuth server
+      - "3888:3888"  # AI server (optional)
+    volumes:
+      # Mount for persistent session data
+      - ./global.json:/app/global.json
+      # Optional: mount for development (comment out for production)
+      # - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    # Uncomment to run on specific network interface
+    # network_mode: host

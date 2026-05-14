@@ -1,0 +1,9 @@
+
+<h1>Graph <h2>Graph Page</h2>
+    <div id="graph"></div>
+        <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          var graphJson = {graph_json};
+          Plotly.newPlot('graph', graphJson.data, graphJson.layout);
+      });
+    </script>
